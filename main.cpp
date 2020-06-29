@@ -56,47 +56,61 @@ int main() {
     thread_sendlog.start(sendlog);
 
     car.stop();
-    wait(1);
-
+/*
     // go straight first road
-    GoStraight(100, 107, 25, 1);
+    GoStraight(100, 105, 20, 1);
 
     // turn left
-    TurnDirection(30, 200, 27);
+    TurnDirection(-50, 50, 12);
 
     // go straight to parking lot
     mission = 1;
-    GoStraight(100, 107, 15, 1);
+    GoStraight(100, 105, 10, 1);
 
     // parking
-    TurnDirection(-20, -207, 23);
+    TurnDirection(50, -50, 12);
     GoStraight(-100, -107, 40, 0);
 
     // leaving parking lot and going to photo point
     GoStraight(100, 107, 25, 1);
-    TurnDirection(150, -150, 12);
+    TurnDirection(50, -50, 12);
     car.goStraight(100, 102);
     wait(1);
-    TurnDirection(30, 200, 27);
+    TurnDirection(-50, 50, 12);
 
     // take a photo
     state = 4;
     wait(10);
-
+*/
     // go ahead to mission 2
     mission = 0;
-    GoStraight(100, 107, 60, 1);
-    TurnDirection(100, 20, 27);
+   // TurnDirection(50, -50, 12);
+    GoStraight(100, 105, 40, 1);
+    TurnDirection(50, -50, 12);
 
     // go to ultra point
+    GoStraight(100, 105, 20, 1);
+    TurnDirection(50, -50, 12);
     car.goStraight(100, 107);
     wait(2);
-    TurnDirection(100, 20, 27);
-    wait(0.5);
-    TurnDirection(-20, -207, 23);
+    TurnDirection(50, -50, 12);
+    car.goStraight(100, 105);
+    wait(2);
+    TurnDirection(-50, 50, 12);
 
     // classification
     classification();
+
+    // back to endpoint
+    mission = 3;
+    TurnDirection(-50, 50, 20);
+    GoStraight(100, 105, 20, 1);
+    TurnDirection(50, -50, 12);
+    GoStraight(100, 105, 20, 1);
+    TurnDirection(50, -50, 12);
+    GoStraight(100, 105, 20, 1);
+
+    
  
 }
 
@@ -160,7 +174,7 @@ void GoStraight(int speed_left, int speed_right, int dist, bool direction){
             }
         }else{
             state = 3;
-            wait(2);
+            wait(3);
             cnt = 2;
             car.stop();
         }
