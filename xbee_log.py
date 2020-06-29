@@ -124,19 +124,25 @@ print("start sending RPC")
 #recieve signal
 
 
-#print('666')
-#for i in range(0, 10):
-#    print('666')
-#    line=dick.readline() # Read an echo string from K66F terminated with '\n'
-#    print(line)
+for i in range(0, 5):
+    s.write("/getLog/run\r".encode())
+    print("ready")
+    time.sleep(1)
+
+
+print("start to suck dick")
 
 #for i in range (30):
 #  line = s.readline()
 
-print("start to recieve dick")
-for i in range(0, 90):
-    line=s.readline() # Read an echo string from K66F terminated with '\n'
+
+while True:
+    # send RPC to remote
+    s.write("/getLog/run\r".encode())
+    line=s.readline()
     print(line)
+    mqttc.publish(topic, line)
+    time.sleep(1)
 
     
 print("sending data to mqtt server")

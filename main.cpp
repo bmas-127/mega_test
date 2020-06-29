@@ -1,5 +1,6 @@
 #include "mbed.h"
 #include "bbcar.h"
+#include "mbed_rpc.h"
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 
@@ -18,11 +19,13 @@ Ticker encoder_ticker;
 parallax_ping  ping1(pin10);
 parallax_encoder encoder( Din_11, encoder_ticker );
 
-// XBee
+// XBee and Xbee rpc
+void getLog(Arguments *in, Reply *out);
 void background_Acc();
 RawSerial pc(USBTX, USBRX);
 RawSerial xbee(D12, D11);
 EventQueue queue(32 * EVENTS_EVENT_SIZE);
+RPCFunction rpcLog(&getLog, "getLog");
 Thread t;
 
 
@@ -69,8 +72,6 @@ int main() {
     TurnDirection(30, 200, 27);
 
     // classification
-
-
  
 }
 
@@ -122,7 +123,7 @@ void GoStraight(int speed_left, int speed_right, int dist, bool direction){
 
     while(true){
         if(direction){
-            xbee.printf("%f\r\n", (float)ping1 );
+            //xbee.printf("%f\r\n", (float)ping1 );
             if((float)ping1 < dist){
                 led1 = 0;
                 cnt ++;
@@ -213,6 +214,10 @@ void xbee_setting(){
   xbee.attach(xbee_rx_interrupt, Serial::RxIrq);
 }
 
+void getLog(Arguments *in, Reply *out){    
+    xbee.printf("go forward to start mission1\r\n");          
+}
+
 void xbee_rx_interrupt(void)
 
 {
@@ -228,40 +233,37 @@ void xbee_rx(void)
 
 {
 
-  static int i = 0;
+  char buf[100] = {0};
 
-  static char buf[100] = {0};
+  char outbuf[100] = {0};
 
   while(xbee.readable()){
 
-    char c = xbee.getc();
+    for (int i=0; ; i++) {
 
-    if(c!='\r' && c!='\n'){
+      char recv = xbee.getc();
 
-      buf[i] = c;
+      if (recv == '\r') {
 
-      i++;
+        break;
 
-      buf[i] = '\0';
+      }
 
-    }else{
-
-      i = 0;
-
-      pc.printf("Get: %s\r\n", buf);
-
-      xbee.printf("%s", buf);
+      buf[i] = pc.putc(recv);
 
     }
 
-  }
+    RPC::call(buf, outbuf);
 
-  wait(0.1);
+    pc.printf("%s\r\n", outbuf);
+
+    wait(0.1);
+
+  }
 
   xbee.attach(xbee_rx_interrupt, Serial::RxIrq); // reattach interrupt
 
 }
-
 
 void reply_messange(char *xbee_reply, char *messange){
 
