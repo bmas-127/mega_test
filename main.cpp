@@ -20,13 +20,21 @@ parallax_ping  ping1(pin10);
 parallax_encoder encoder( Din_11, encoder_ticker );
 
 // XBee and Xbee rpc
-void getLog(Arguments *in, Reply *out);
+//void getLog(Arguments *in, Reply *out);
 void background_Acc();
 RawSerial pc(USBTX, USBRX);
 RawSerial xbee(D12, D11);
 EventQueue queue(32 * EVENTS_EVENT_SIZE);
-RPCFunction rpcLog(&getLog, "getLog");
+//RPCFunction rpcLog(&getLog, "get");
 Thread t;
+
+// state
+int state = 0, mission = -1;
+
+// log thread
+void sendlog();
+Thread thread_sendlog;
+Timer timer;
 
 
 void GoStraight(int speed_left, int speed_right, int dist, bool direction);
@@ -44,40 +52,58 @@ int main() {
     pc.printf("suck  ===========  dick");
     xbee_setting();
 
+
+    thread_sendlog.start(sendlog);
+
     car.stop();
     wait(1);
 
-   // background_Acc();
-
     // go straight first road
     GoStraight(100, 107, 25, 1);
-
-    classification();
 
     // turn left
     TurnDirection(30, 200, 27);
 
     // go straight to parking lot
+    mission = 1;
     GoStraight(100, 107, 15, 1);
 
     // parking
     TurnDirection(-20, -207, 23);
     GoStraight(-100, -107, 40, 0);
 
-    // leaving parking lot and taking photo
+    // leaving parking lot and going to photo point
     GoStraight(100, 107, 25, 1);
     TurnDirection(150, -150, 12);
     car.goStraight(100, 102);
     wait(1);
     TurnDirection(30, 200, 27);
 
+    // take a photo
+    state = 4;
+    wait(10);
+
+    // go ahead to mission 2
+    mission = 0;
+    GoStraight(100, 107, 60, 1);
+    TurnDirection(100, 20, 27);
+
+    // go to ultra point
+    car.goStraight(100, 107);
+    wait(2);
+    TurnDirection(100, 20, 27);
+    wait(0.5);
+    TurnDirection(-20, -207, 23);
+
     // classification
+    classification();
  
 }
 
 void classification()
 {
-    float ping_dis[3];
+    state = 2;
+    float ping_dis[4];
 
     car.goStraight(50, -50);
     wait(0.38);
@@ -107,6 +133,7 @@ void classification()
 
 
 void GoStraight(int speed_left, int speed_right, int dist, bool direction){
+    state = 0;
     int cnt = 0;
 
     car.stop();
@@ -132,6 +159,7 @@ void GoStraight(int speed_left, int speed_right, int dist, bool direction){
                 led1 = 1;
             }
         }else{
+            state = 3;
             wait(2);
             cnt = 2;
             car.stop();
@@ -144,6 +172,8 @@ void GoStraight(int speed_left, int speed_right, int dist, bool direction){
 }
 
 void TurnDirection(int speed_left, int speed_right, int num){
+    state = 1;
+
     car.stop();
     wait(0.5);
 
@@ -214,8 +244,25 @@ void xbee_setting(){
   xbee.attach(xbee_rx_interrupt, Serial::RxIrq);
 }
 
-void getLog(Arguments *in, Reply *out){    
-    xbee.printf("go forward to start mission1\r\n");          
+void sendlog(){   
+  while(true){
+    if(state == 0){
+      if(mission == -1) xbee.printf("go foward to mission 1\r\n");
+      else if (mission == 0) xbee.printf("go foward to mission 2\r\n");
+      else if (mission == 3) xbee.printf("go foward to end point\r\n");
+      else xbee.printf("forwarding, executioning mission %d\r\n", mission);
+    }        
+    else if(state == 1)
+      xbee.printf("turn conner\r\n");          
+    else if(state == 2)
+      xbee.printf("scannig obecject and classifying\r\n");     
+    else if(state == 3)
+      xbee.printf("go backward\r\n");               
+    else if(state == 4)
+      xbee.printf("take a photo\r\n");    
+
+    wait(1);
+  }
 }
 
 void xbee_rx_interrupt(void)

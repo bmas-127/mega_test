@@ -124,12 +124,6 @@ print("start sending RPC")
 #recieve signal
 
 
-for i in range(0, 5):
-    s.write("/getLog/run\r".encode())
-    print("ready")
-    time.sleep(1)
-
-
 print("start to suck dick")
 
 #for i in range (30):
@@ -138,11 +132,10 @@ print("start to suck dick")
 
 while True:
     # send RPC to remote
-    s.write("/getLog/run\r".encode())
     line=s.readline()
     print(line)
     mqttc.publish(topic, line)
-    time.sleep(1)
+    time.sleep(2)
 
     
 print("sending data to mqtt server")
